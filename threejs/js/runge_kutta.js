@@ -1,36 +1,36 @@
-function runge_kutta(yin, h)
+function runge_kutta(yin, l1, l2, h)
 {
-	yout = [0, 0, 0, 0];
-	yt = [0, 0, 0, 0];
-	k = [[0, 0, 0, 0], 
+	var yout = [0, 0, 0, 0];
+	var yt = [0, 0, 0, 0];
+	var k = [[0, 0, 0, 0], 
 	     [0, 0, 0, 0], 
 		 [0, 0, 0, 0], 
 		 [0, 0, 0, 0]];
 
 	var i;
 
-	dydx = derivatives(yin);
+	var dydx = derivatives(yin, l1, l2);
 	for(i=0; i<4; i++)
 	{
 		k[0][i] = h*dydx[i];
 		yt[i] = yin[i] + 0.5*k[0][i];
 	}
 
-	dydx = derivatives(yt);
+	dydx = derivatives(yt, l1, l2);
 	for(i=0; i<4; i++)
 	{
 		k[1][i] = h*dydx[i];
 		yt[i] = yin[i] + 0.5*k[1][i];
 	}
 	
-	dydx = derivatives(yt);
+	dydx = derivatives(yt, l1, l2);
 	for(i=0; i<4; i++)
 	{
 		k[2][i] = h*dydx[i];
 		yt[i] = yin[i] + k[2][i];
 	}
 
-	dydx = derivatives(yt);
+	dydx = derivatives(yt, l1, l2);
 	for(i=0; i<4; i++)
 	{
 		k[3][i] = h*dydx[i];
@@ -39,18 +39,18 @@ function runge_kutta(yin, h)
 	return yout;
 };
 
-function derivatives(yin){
-	m1 = 1.;
-	m2 = 1.;
-	l1 = 1.;
-	l2 = 1.;
-	G = 9.8;
+function derivatives(yin, l1, l2){
+	var m1 = 1.;
+	var m2 = 1.;
+	//l1 = 1.;
+	//l2 = 1.;
+	var G = 9.8;
 
-	dydx = [0, 0, 0, 0];
+	var dydx = [0, 0, 0, 0];
 	dydx[0] = yin[1];
 
-	del = yin[2] - yin[0];
-	den1 = (m1+m2)*l1 - m2*l1*Math.cos(del)*Math.cos(del);
+	var del = yin[2] - yin[0];
+	var den1 = (m1+m2)*l1 - m2*l1*Math.cos(del)*Math.cos(del);
 	dydx[1] = (m2*l1*yin[1]*yin[1]*Math.sin(del)*Math.cos(del)
 			+ m2*G*Math.sin(yin[2])*Math.cos(del) 
 			+ m2*l2*yin[3]*yin[3]*Math.sin(del)
@@ -58,7 +58,7 @@ function derivatives(yin){
 
 	dydx[2] = yin[3];
 
-	den2 = (l2/l1)*den1;
+	var den2 = (l2/l1)*den1;
 	dydx[3] = (-m2*l2*yin[3]*yin[3]*Math.sin(del)*Math.cos(del)
 			+ (m1+m2)*G*Math.sin(yin[0])*Math.cos(del)
 			- (m1+m2)*l1*yin[1]*yin[1]*Math.sin(del)

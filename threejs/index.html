@@ -8,27 +8,53 @@
 	</head>
 	<body>
 		<script src="js/three.min.js"></script>
+		<script src="js/OrbitControls.js"></script>
+		<script type="text/javascript" src="js/dat.gui.min.js"></script>
 		<script src="js/runge_kutta.js"></script>
 		<script>
+
+			// Double Pendulum parameters
+			var DP_params = {
+				l1: 2.0,
+				l2: 2.0,
+				theta1: 0.1, 
+				omega1: 0.1, 
+				theta2: 0.1,
+				omega2: 0.1,
+				scale1: 2.0,
+				scale2: 2.0,
+			};
+
 			var scene = new THREE.Scene();
+
 			// Virtual camera, what the user sees thru
-			// See the documentation
 			var camera = new THREE.PerspectiveCamera(75, 
 					window.innerWidth / window.innerHeight, 0.1, 1000);
 			
+			// Renderer
 			var renderer = new THREE.WebGLRenderer();
 			renderer.setPixelRatio(10);
 			document.body.appendChild(renderer.domElement);
 
+			// Orbit Controller
+			controls = new THREE.OrbitControls(camera, renderer.domElement);
+
+			// create light source
+			var ambient_light = new THREE.AmbientLight(0xffffff, .3, 100);
+			var point_light = new THREE.PointLight(0xffffff, 2., 600);
+			point_light.position.set(5, 5, 5);
+			scene.add(ambient_light);
+			scene.add(point_light);
+
 	
 			// create the shape
-			var geometry = new THREE.BoxGeometry(.1, 2, .1);
-			var geometry2 = new THREE.BoxGeometry(.1, 2, .1);
+			var geometry = new THREE.BoxGeometry(.3, 1, .3);
+			var geometry2 = new THREE.BoxGeometry(.3, 1, .3);
 
 			// create a material, colour or image texture
-			var material = new THREE.MeshBasicMaterial({ color: 0xffffff,
+			var material = new THREE.MeshPhongMaterial({ color: "green",
 													wireframe: false });
-			var material2 = new THREE.MeshBasicMaterial({ color: 0xffffff,
+			var material2 = new THREE.MeshPhongMaterial({ color: "red",
 													wireframe: false });
 			var cube1 = new THREE.Mesh(geometry, material);
 			var cube2 = new THREE.Mesh(geometry2, material2);
@@ -38,6 +64,7 @@
 			// camera is inside the cube (at the origin)
 			// so we need to move
 			camera.position.z = 6;
+			//camera.position.y = -2;
 
 
 			th1 = Math.PI*Math.random();
@@ -45,46 +72,67 @@
 			w1 = 0;
 			w2 = 0;
 			y_pass = [th1, w1, th2, w2];
+			I = [1, 0, 0, 0,
+				 0, 1, 0, 0,
+				 0, 0, 1, 0,
+				 0, 0, 0, 1];
 
 			// game logic
 			var update = function()
 			{
-				//cube1.position.set(0, 0, 0);
-				//cube2.position.set(0, 0, 0);
 				cube1.matrix.set(
 						1, 0, 0, 0,
-						0, 1, 0, 0,
+						0, DP_params.scale1, 0, 0,
 						0, 0, 1, 0,
 						0, 0, 0, 1
 				);
 				cube2.matrix.set(
 						1, 0, 0, 0,
-						0, 1, 0, 0,
+						0, DP_params.scale2, 0, 0,
 						0, 0, 1, 0,
 						0, 0, 0, 1
 				);
-				
-				//doublePendulumTransform(th1, th2, 2., 2.);
-				doublePendulumTransform(y_pass[0], y_pass[2], 2., 2.);
-				y_pass = runge_kutta(y_pass, 0.01);
-				console.log(y_pass);
+
+				l1 = DP_params.l1;
+				l2 = DP_params.l2;
+				doublePendulumTransform(y_pass[0], y_pass[2], l1, l2);
+				y_pass = runge_kutta(y_pass, l1, l2, 0.01);
+				DP_params.theta1 = y_pass[0];
+				DP_params.omega1 = y_pass[1];
+				DP_params.theta2 = y_pass[2];
+				DP_params.omega2 = y_pass[3];
+
+				//console.log(y_pass);
 			};
 
 			var doublePendulumTransform = function(th1, th2, l1, l2)
 			{
+				mat = new THREE.Matrix4();
 				trans_l1 = make_mat('translation', l1);
 				trans_l2 = make_mat('translation', l2);
 				rot_th1 = make_mat('rotation', th1);
 				rot_th2 = make_mat('rotation', th2-th1);
 
-				cube2.applyMatrix(trans_l2);
-				cube2.applyMatrix(rot_th2);
-				cube2.applyMatrix(trans_l1);
-				cube2.applyMatrix(trans_l1);
-				cube2.applyMatrix(rot_th1);
 
-				cube1.applyMatrix(trans_l1);
-				cube1.applyMatrix(rot_th1);
+				//cube2.applyMatrix(trans_l2);
+				//cube2.applyMatrix(rot_th2);
+				//cube2.applyMatrix(trans_l1);
+				//cube2.applyMatrix(trans_l1);
+				//cube2.applyMatrix(rot_th1);
+
+				//cube1.applyMatrix(trans_l1);
+				//cube1.applyMatrix(rot_th1);
+
+				mat.multiply(rot_th1);
+				mat.multiply(trans_l1);
+				cube1.applyMatrix(mat);
+
+				mat.multiply(trans_l1);
+				mat.multiply(rot_th2);
+				mat.multiply(trans_l2);
+				cube2.applyMatrix(mat);
+
+				//console.log(mat);
 			};
 
 			var make_mat = function(flag, param)
@@ -118,6 +166,26 @@
 				return mat;
 			}
 
+
+			
+			// setting dat-gui
+			var createGUI = function()
+			{
+				var gui = new dat.GUI();
+
+				gui.add(DP_params, 'l1').onFinishChange(function(newVal){
+						DP_params.scale1 = newVal;
+				});
+				gui.add(DP_params, 'l2').onFinishChange(function(newVal){
+						DP_params.scale2 = newVal;
+				});
+				gui.add(DP_params, 'theta1').listen();
+				gui.add(DP_params, 'omega1').listen();
+				gui.add(DP_params, 'theta2').listen();
+				gui.add(DP_params, 'omega2').listen();
+			}
+
+
 			// draw scene
 			var render = function()
 			{
@@ -133,6 +201,10 @@
 				render();
 			}
 
+
+
+			// main start
+			createGUI();
 			GameLoop();
 		</script>
 	</body>
