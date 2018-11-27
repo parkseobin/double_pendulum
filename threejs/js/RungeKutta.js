@@ -36,6 +36,9 @@ function runge_kutta(yin, l1, l2, h)
 		k[3][i] = h*dydx[i];
 		yout[i] = yin[i] + k[0][i]/6. + k[1][i]/3. + k[2][i]/3. + k[3][i]/6.;
 	}
+
+	yout[0] = yout[0] % (Math.PI*2)
+	yout[2] = yout[2] % (Math.PI*2)
 	return yout;
 };
 

@@ -108,10 +108,10 @@
 
 				doublePendulumTransform(y_pass[0], y_pass[2], l1, l2);
 				y_pass = runge_kutta(y_pass, l1, l2, 0.01);
-				DP_params.theta1 = y_pass[0];
-				DP_params.omega1 = y_pass[1];
-				DP_params.theta2 = y_pass[2];
-				DP_params.omega2 = y_pass[3];
+				DP_params.theta1 = y_pass[0] * 180 / Math.PI;
+				DP_params.omega1 = y_pass[1] * 180 / Math.PI;
+				DP_params.theta2 = y_pass[2] * 180 / Math.PI;
+				DP_params.omega2 = y_pass[3] * 180 / Math.PI;
 				//console.log(y_pass);
 			};
 
