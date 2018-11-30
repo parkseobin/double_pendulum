@@ -191,7 +191,6 @@
 			// Run main loop (update, render, repeat)
 			function Loop()
 			{
-				requestAnimationFrame(Loop);
 
 				update();
 				render();
@@ -207,7 +206,8 @@
 			************************************/
 
 			createGUI();
-			Loop();
+			requestAnimationFrame(Loop);
+			//Loop();
 
 		</script>
 	</body>
